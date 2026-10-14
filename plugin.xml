@@ -33,6 +33,7 @@
     </config-file>
 
     <source-file src="src/android/com/pbakondy/SpeechRecognition.java" target-dir="src/com/pbakondy" />
+    <source-file src="src/android/com/pbakondy/SilenceTimeouts.java" target-dir="src/com/pbakondy" />
     <source-file src="src/android/com/pbakondy/LanguageDetailsChecker.java" target-dir="src/com/pbakondy" />
   </platform>
 

@@ -4,3 +4,5 @@ npm-debug.log
 notes
 .vscode
 
+test/android/build/
+test/android/.gradle/

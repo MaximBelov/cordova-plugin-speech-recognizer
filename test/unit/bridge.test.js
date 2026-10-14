@@ -31,7 +31,8 @@ test('startListening sends the five arguments the native side reads, in order', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].service, 'SpeechRecognition');
   assert.equal(calls[0].action, 'startListening');
-  assert.deepEqual(calls[0].args, ['en-IE', 3, 'Say a search term', true, false]);
+  // The three silence timeouts come after the original five; absent means undefined.
+  assert.deepEqual(calls[0].args, ['en-IE', 3, 'Say a search term', true, false, undefined, undefined, undefined]);
   assert.equal(calls[0].success, success);
   assert.equal(calls[0].error, error);
 });
@@ -39,7 +40,18 @@ test('startListening sends the five arguments the native side reads, in order', 
 test('startListening without options sends undefined for every argument', () => {
   bridge().startListening(() => {}, () => {});
 
-  assert.deepEqual(calls[0].args, [undefined, undefined, undefined, undefined, undefined]);
+  assert.deepEqual(calls[0].args, [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined]);
+});
+
+test('silence timeouts are passed as the last three arguments, in milliseconds', () => {
+  bridge().startListening(() => {}, () => {}, {
+    language: 'en-GB',
+    completeSilenceMs: 2500,
+    possiblyCompleteSilenceMs: 1500,
+    minimumLengthMs: 800,
+  });
+
+  assert.deepEqual(calls[0].args.slice(5), [2500, 1500, 800]);
 });
 
 test('stopListening, isRecognitionAvailable and the permission calls reach their own actions', () => {
