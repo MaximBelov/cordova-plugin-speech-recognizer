@@ -34,6 +34,7 @@
   },
   "homepage": "https://github.com/pbakondy/cordova-plugin-speechrecognition#readme",
   "scripts": {
-    "test": "node --test test/unit/*.test.js"
+    "test": "node --test test/unit/*.test.js",
+    "test:ios": "sh test/ios/check-syntax.sh"
   }
 }
