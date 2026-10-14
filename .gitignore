@@ -6,3 +6,4 @@ notes
 
 test/android/build/
 test/android/.gradle/
+.cordova-headers/
