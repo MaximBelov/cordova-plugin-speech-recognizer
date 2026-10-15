@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="io.github.maximbelov.speech.demo" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>SpeechDemo</name>
-    <description>Demo of cordova-plugin-speechrecognition: one button per call, the answer of each shown on screen</description>
+    <description>Demo of cordova-plugin-speech-recognizer: one button per call, the answer of each shown on screen</description>
     <content src="index.html" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
