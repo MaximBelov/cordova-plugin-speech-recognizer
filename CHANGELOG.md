@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+
+- Docs: how an app sets its own iOS permission prompt texts with an `edit-config` in its `config.xml`, instead of patching the plugin
+
 ## v1.3.0
 
 - iOS: a microphone that is held by another app no longer crashes the plugin: `startListening` refuses with `Audio input unavailable` before it taps the input, and an audio engine or session that fails to start is reported as an error
