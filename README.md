@@ -1,5 +1,25 @@
 # cordova-plugin-speechrecognition
 
+## Why this fork exists
+
+Upstream (`pbakondy/cordova-plugin-speechrecognition`) has been unmaintained since 2022. Two problems in
+the version this app used, both found on devices:
+
+- **iOS crashes the app.** While the microphone is held by a call or another app, the audio input has no
+  format. The plugin installs a tap on it anyway, and that raises an exception the app does not catch.
+  `startListening` now refuses with an error in that case, catches failures on the tap and the engine start,
+  and reports audio session errors instead of dropping them.
+- **Android ends the sentence early.** The recognizer stops after a short silence, while the speaker is still
+  talking. `startListening` accepts three optional timeouts in milliseconds (`completeSilenceMs`,
+  `possiblyCompleteSilenceMs`, `minimumLengthMs`). Without them the platform default applies.
+
+Also added: tests for the JavaScript bridge (`npm test`), JVM tests for the Android helper
+(`npm run test:android`), an iOS syntax check against the simulator SDK (`npm run test:ios`), and a demo app
+in `demo/` that installs the plugin from this checkout and calls every API.
+
+The npm package is not published from this fork yet.
+
+
 [![npm](https://img.shields.io/npm/v/cordova-plugin-speechrecognition.svg)](https://www.npmjs.com/package/cordova-plugin-speechrecognition)
 ![Platform](https://img.shields.io/badge/platform-android%20%7C%20ios-lightgrey.svg)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R7STJ6V2PNEMA)
