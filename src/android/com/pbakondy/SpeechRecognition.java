@@ -58,6 +58,7 @@ public class SpeechRecognition extends CordovaPlugin {
   private Context context;
   private View view;
   private SpeechRecognizer recognizer;
+  private SpeechRecognitionListener listener;
 
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -67,11 +68,11 @@ public class SpeechRecognition extends CordovaPlugin {
     context = webView.getContext();
     view = webView.getView();
 
+    listener = new SpeechRecognitionListener();
     view.post(new Runnable() {
       @Override
       public void run() {
         recognizer = SpeechRecognizer.createSpeechRecognizer(activity);
-        SpeechRecognitionListener listener = new SpeechRecognitionListener();
         recognizer.setRecognitionListener(listener);
       }
     });

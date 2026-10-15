@@ -1,26 +1,6 @@
-// JVM unit tests for the plugin's pure Java. The plugin itself needs cordova-android and an Activity, so only
-// the files that have no Android types are compiled here, straight from the plugin source tree.
+// The plugin's Java built against cordova-android's framework and tested on the JVM with Robolectric: no emulator, no
+// network beyond the build's own dependencies. `npm run test:android` runs it.
 plugins {
-    id 'java'
-}
-
-repositories {
-    mavenCentral()
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir '../../src/android/com/pbakondy'
-            include 'SilenceTimeouts.java'
-        }
-    }
-}
-
-dependencies {
-    testImplementation 'junit:junit:4.13.2'
-}
-
-test {
-    useJUnit()
+    // The build tools are the ones cordova-android's release ships with; a newer Android Gradle plugin is another build.
+    id 'com.android.library' version '8.10.1' apply false
 }

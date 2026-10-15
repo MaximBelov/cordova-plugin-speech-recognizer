@@ -1,1 +1,17 @@
-rootProject.name = 'speech-recognition-jvm-tests'
+pluginManagement {
+    repositories {
+        google()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'speech-recognition-tests'
+include ':plugin'
