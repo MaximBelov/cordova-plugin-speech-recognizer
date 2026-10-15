@@ -29,6 +29,10 @@
 @end
 
 
+BOOL SRInputFormatIsUsable(AVAudioFormat *format) {
+    return format != nil && format.sampleRate > 0 && format.channelCount > 0;
+}
+
 @implementation SpeechRecognition
 
 - (void)isRecognitionAvailable:(CDVInvokedUrlCommand*)command {
@@ -108,7 +112,7 @@
         // While the microphone is held (a call, another app, a Bluetooth route change) the input has no
         // format. A tap on it raises IsFormatSampleRateAndChannelCountValid as an NSException, which
         // closes the app, so refuse the start instead and let the caller show the error.
-        if (format.sampleRate == 0 || format.channelCount == 0) {
+        if (!SRInputFormatIsUsable(format)) {
             NSLog(@"startListening() input format has no sample rate or channels");
             CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_AUDIO_INPUT];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
