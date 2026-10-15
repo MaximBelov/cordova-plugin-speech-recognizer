@@ -222,6 +222,23 @@ It uses [Speech API](https://cloud.google.com/speech/) of Google. The Android pu
 - [NSMicrophoneUsageDescription](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW25) permission
 - [NSSpeechRecognitionUsageDescription](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW52) permission
 
+### Permission prompt texts
+
+iOS shows the text of `NSMicrophoneUsageDescription` and `NSSpeechRecognitionUsageDescription` in the two permission prompts. The plugin writes generic placeholders, `Request to use Microphone` and `Request to use Speech Recognition`. App Store review expects a text that says why your app needs access, so set your own in your app's `config.xml`:
+
+```xml
+<platform name="ios">
+    <edit-config file="*-Info.plist" mode="merge" target="NSMicrophoneUsageDescription">
+        <string>Your app uses the microphone for voice search.</string>
+    </edit-config>
+    <edit-config file="*-Info.plist" mode="merge" target="NSSpeechRecognitionUsageDescription">
+        <string>Your app converts your speech to text to search.</string>
+    </edit-config>
+</platform>
+```
+
+An `edit-config` in the app's `config.xml` takes precedence over the plugin's `config-file`, so you do not need to patch the plugin. Check the result in the built app's `Info.plist`. Another plugin that declares the same key (a diagnostics plugin, for example) does not change this.
+
 ### How it works
 
 The Speech APIs perform speech recognition by communicating with Apple's servers or using an on-device speech recognizer, if available.
