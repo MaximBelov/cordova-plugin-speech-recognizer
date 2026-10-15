@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.0
+
+- iOS: a microphone that is held by another app no longer crashes the plugin: `startListening` refuses with `Audio input unavailable` before it taps the input, and an audio engine or session that fails to start is reported as an error
+- Android: `startListening` takes `completeSilenceMs`, `possiblyCompleteSilenceMs` and `minimumLengthMs`, so the recognizer does not end a sentence early (values of 0 or less leave the platform default)
+- Tests: JavaScript bridge, Robolectric on the JVM, XCTest on an iOS simulator, and cordova-paramedic on an iOS simulator and an Android emulator, each with a coverage floor
+
 ## v1.2.0
 
 - Android: add `stopListening` [by Simone Compagnone]

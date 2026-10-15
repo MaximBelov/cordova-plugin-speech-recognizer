@@ -1,0 +1,11 @@
+{
+  "name": "cordova-plugin-speechrecognition-tests",
+  "version": "0.1.0",
+  "description": "Tests of cordova-plugin-speechrecognition for cordova-plugin-test-framework (run by cordova-paramedic)",
+  "license": "MIT",
+  "private": true,
+  "cordova": {
+    "id": "cordova-plugin-speechrecognition-tests",
+    "platforms": ["android", "ios"]
+  }
+}

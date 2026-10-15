@@ -11,4 +11,4 @@ binary="$derived/Build/Products/Debug-iphonesimulator/SpeechRecognitionTests.xct
 mkdir -p ../../coverage
 # only the plugin's sources: not the tests, not cordova-ios, not the headers it was built against
 xcrun llvm-cov export -summary-only -instr-profile="$profile" "$binary" \
-  -ignore-filename-regex='(Tests|\.build|node_modules|SourcePackages|\.cordova-headers)' > ../../coverage/ios.json
+  -ignore-filename-regex='(Tests|\.build|node_modules|SourcePackages)' > ../../coverage/ios.json

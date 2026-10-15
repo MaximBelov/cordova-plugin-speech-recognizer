@@ -6,7 +6,6 @@ notes
 
 test/android/build/
 test/android/.gradle/
-.cordova-headers/
 test/android/plugin/build/
 test/android/local.properties
 test/ios/.build/

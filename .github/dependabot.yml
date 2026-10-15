@@ -1,0 +1,54 @@
+# Weekly updates for what this repository depends on. Dependabot reads this file from the default branch only.
+# Cordova's packages move together: cordova-android and cordova-ios (npm) and org.apache.cordova:framework (Gradle, test/android)
+# belong together, so a bump of one is made with the others, by hand.
+version: 2
+
+updates:
+  # the workflows in .github/workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+    labels: [dependencies]
+
+  # the plugin's dev dependencies: the cordova CLI, the platforms and cordova-paramedic
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+
+  # the demo app's platforms
+  - package-ecosystem: npm
+    directory: /demo
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    labels: [dependencies]
+
+  # the Android JVM tests: the Gradle plugins, Robolectric, JUnit and Mockito
+  - package-ecosystem: gradle
+    directory: /test/android
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      android-tests:
+        patterns: ['*']
+        update-types: [minor, patch]
+    # The build tools and cordova's framework move with cordova-android, by hand: the tests build the plugin the way an app on that
+    # release does, so a newer Gradle or Android Gradle plugin is another build, not a better one.
+    ignore:
+      - dependency-name: gradle-wrapper
+      - dependency-name: com.android.library
+      - dependency-name: org.apache.cordova:framework
+    labels: [dependencies]

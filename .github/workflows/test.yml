@@ -1,5 +1,9 @@
 name: test
 
+# Every layer of the tests, and the publish of a new version. A pull request runs the tests; a push to master runs them too and then
+# publishes the version in package.json to npm when that version is not there yet. One workflow file, because npm's trusted publishing
+# names it: the package's Settings > Trusted Publisher on npmjs.com must say test.yml, with no environment.
+
 on:
   pull_request:
   push:
@@ -10,34 +14,140 @@ permissions:
   contents: read
 
 jobs:
+  # Node's tests of www/, the JavaScript that talks to the native side. Fails below the floor in test/coverage/floors.json.
   javascript:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm test
+      - run: npm run test:unit:coverage
 
+  # Robolectric on the JVM, against cordova-android's framework: no emulator. Fails below the Android floor.
   android-jvm:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - run: npm run test:android
+      - run: npm run test:android:coverage
+      - name: Keep the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-android
+          path: test/android/plugin/build/reports/coverage/test/debug
+          if-no-files-found: ignore
 
-  ios-syntax:
+  # XCTest on an iOS simulator, against cordova-ios 8.1.1 from node_modules. Fails below the iOS floor.
+  ios-xctest:
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      # The Cordova headers come from cordova-ios, which is not a dependency of this repository.
-      - run: npm install --no-save --prefix .cordova-headers cordova-ios@8.1.1
-      - run: npm run test:ios
-        env:
-          CORDOVA_HEADERS: ${{ github.workspace }}/.cordova-headers/node_modules/cordova-ios/CordovaLib/include/Cordova
+      - run: npm ci
+      - run: npm run test:ios:coverage
+      - name: Keep the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ios
+          path: coverage/ios.json
+          if-no-files-found: ignore
+      # A cancelled run leaves xcodebuild and the simulator running, which slows the runner's own clean-up for minutes.
+      - name: Stop what the tests left running
+        if: always()
+        run: |
+          pkill -f '[x]codebuild' || true
+          xcrun simctl shutdown all || true
+
+  # The plugin's test plugin (tests/) on an iOS simulator, through cordova-paramedic: the plugin installed the way an app installs it.
+  ios-paramedic:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      # cordova-paramedic checks the requirements of a device build first, and refuses to start without ios-deploy even though a
+      # simulator run does not use it.
+      - run: brew install ios-deploy
+      - run: npm run test:paramedic:ios:simulator
+      - name: Stop what the tests left running
+        if: always()
+        run: |
+          pkill -f '[c]ordova-paramedic' || true
+          pkill -f '[x]codebuild' || true
+          xcrun simctl shutdown all || true
+
+  # The same tests on an Android emulator. An emulator needs hardware acceleration, which the runner allows once /dev/kvm is open.
+  android-paramedic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2.38.0
+        with:
+          api-level: 35
+          arch: x86_64
+          script: ANDROID_SERIAL=emulator-5554 npm run test:paramedic:android
+
+  # Only a push to master gets here, and only when every test above passed. It publishes a version that npm does not have yet, and
+  # nothing when the version is already there: a release is a version bump merged to master.
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [javascript, android-jvm, ios-xctest, ios-paramedic, android-paramedic]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # npm's trusted publishing signs in with this
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # npm 11.5 or newer is needed for trusted publishing
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+      - name: Publish a version that is new
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          # The name is not ours until somebody checks: an unrelated package on npm under the same name would hold this version, and
+          # the check below would then say "already published" and skip without a word. Refuse instead.
+          published=$(npm view "$name" repository.url 2>/dev/null || true)
+          if [ -n "$published" ] && ! echo "$published" | grep -q 'MaximBelov/cordova-plugin-speech-recognizer'; then
+            echo "$name on npm belongs to another repository: $published"
+            exit 1
+          fi
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already published: nothing to do"
+            exit 0
+          fi
+          npm publish --access public --provenance

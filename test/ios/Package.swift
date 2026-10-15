@@ -8,7 +8,7 @@ let package = Package(
     name: "SpeechRecognitionTests",
     platforms: [.iOS(.v15)],
     dependencies: [
-        .package(path: "../../.cordova-headers/node_modules/cordova-ios")
+        .package(path: "../../node_modules/cordova-ios")
     ],
     targets: [
         .target(
