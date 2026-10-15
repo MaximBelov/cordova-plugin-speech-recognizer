@@ -2,8 +2,10 @@
 
 ## Why this fork exists
 
-Upstream (`pbakondy/cordova-plugin-speechrecognition`) has been unmaintained since 2022. Two problems in
-the version this app used, both found on devices:
+Upstream is `pbakondy/cordova-plugin-speechrecognition`, unmaintained since 2022. This repository was forked from
+a copy of it that a team kept in the `herdwatch-apps` organisation, which is the parent shown on GitHub.
+
+Two problems in the version that copy shipped, both found on devices:
 
 - **iOS crashes the app.** While the microphone is held by a call or another app, the audio input has no
   format. The plugin installs a tap on it anyway, and that raises an exception the app does not catch.
