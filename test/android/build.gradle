@@ -1,0 +1,6 @@
+// The plugin's Java built against cordova-android's framework and tested on the JVM with Robolectric: no emulator, no
+// network beyond the build's own dependencies. `npm run test:android` runs it.
+plugins {
+    // The build tools are the ones cordova-android's release ships with; a newer Android Gradle plugin is another build.
+    id 'com.android.library' version '8.10.1' apply false
+}

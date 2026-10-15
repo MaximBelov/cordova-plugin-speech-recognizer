@@ -16,6 +16,8 @@
 #define MESSAGE_NOT_DETERMINED @"Speech recognition not determined on this device"
 #define MESSAGE_ACCESS_DENIED_MICROPHONE @"User denied access to microphone"
 #define MESSAGE_ONGOING @"Ongoing speech recognition"
+#define MESSAGE_AUDIO_SESSION @"Audio session unavailable"
+#define MESSAGE_AUDIO_INPUT @"Audio input unavailable"
 
 @interface SpeechRecognition()
 
@@ -26,6 +28,10 @@
 
 @end
 
+
+BOOL SRInputFormatIsUsable(AVAudioFormat *format) {
+    return format != nil && format.sampleRate > 0 && format.channelCount > 0;
+}
 
 @implementation SpeechRecognition
 
@@ -80,16 +86,38 @@
             self.recognitionTask = nil;
         }
 
+        // Every failure here used to be dropped (error:nil), so the caller waited for results that never came.
         AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-        [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:nil];
-        [audioSession setMode:AVAudioSessionModeDefault error:nil];
-        [audioSession setActive:YES withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:nil];
+        NSError *sessionError = nil;
+        BOOL sessionReady = [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord
+                                          withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker
+                                                error:&sessionError];
+        sessionReady = sessionReady && [audioSession setMode:AVAudioSessionModeDefault error:&sessionError];
+        sessionReady = sessionReady && [audioSession setActive:YES
+                                                   withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                                         error:&sessionError];
+        if (!sessionReady) {
+            NSLog(@"startListening() audio session: %@", sessionError.localizedDescription);
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_AUDIO_SESSION];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
 
         self.recognitionRequest = [[SFSpeechAudioBufferRecognitionRequest alloc] init];
         self.recognitionRequest.shouldReportPartialResults = showPartial;
 
         AVAudioInputNode *inputNode = self.audioEngine.inputNode;
         AVAudioFormat *format = [inputNode outputFormatForBus:0];
+
+        // While the microphone is held (a call, another app, a Bluetooth route change) the input has no
+        // format. A tap on it raises IsFormatSampleRateAndChannelCountValid as an NSException, which
+        // closes the app, so refuse the start instead and let the caller show the error.
+        if (!SRInputFormatIsUsable(format)) {
+            NSLog(@"startListening() input format has no sample rate or channels");
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_AUDIO_INPUT];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
 
         self.recognitionTask = [self.speechRecognizer recognitionTaskWithRequest:self.recognitionRequest resultHandler:^(SFSpeechRecognitionResult *result, NSError *error) {
 
@@ -143,12 +171,33 @@
             }
         }];
 
-        [inputNode installTapOnBus:0 bufferSize:1024 format:format block:^(AVAudioPCMBuffer *buffer, AVAudioTime *when) {
-            [self.recognitionRequest appendAudioPCMBuffer:buffer];
-        }];
+        @try {
+            [inputNode installTapOnBus:0 bufferSize:1024 format:format block:^(AVAudioPCMBuffer *buffer, AVAudioTime *when) {
+                [self.recognitionRequest appendAudioPCMBuffer:buffer];
+            }];
+        } @catch (NSException *exception) {
+            // Any other refusal from AVFoundation on this path is an error for the caller, not a crash.
+            NSLog(@"startListening() could not tap the input: %@", exception.reason);
+            [self.recognitionTask cancel];
+            self.recognitionTask = nil;
+            self.recognitionRequest = nil;
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_AUDIO_INPUT];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
 
         [self.audioEngine prepare];
-        [self.audioEngine startAndReturnError:nil];
+        NSError *engineError = nil;
+        if (![self.audioEngine startAndReturnError:&engineError]) {
+            NSLog(@"startListening() audio engine: %@", engineError.localizedDescription);
+            [inputNode removeTapOnBus:0];
+            [self.recognitionTask cancel];
+            self.recognitionTask = nil;
+            self.recognitionRequest = nil;
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:MESSAGE_AUDIO_INPUT];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
 
     }];
 

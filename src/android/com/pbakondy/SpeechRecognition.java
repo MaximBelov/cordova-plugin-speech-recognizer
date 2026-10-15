@@ -29,6 +29,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 public class SpeechRecognition extends CordovaPlugin {
@@ -57,6 +58,7 @@ public class SpeechRecognition extends CordovaPlugin {
   private Context context;
   private View view;
   private SpeechRecognizer recognizer;
+  private SpeechRecognitionListener listener;
 
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -66,11 +68,11 @@ public class SpeechRecognition extends CordovaPlugin {
     context = webView.getContext();
     view = webView.getView();
 
+    listener = new SpeechRecognitionListener();
     view.post(new Runnable() {
       @Override
       public void run() {
         recognizer = SpeechRecognizer.createSpeechRecognizer(activity);
-        SpeechRecognitionListener listener = new SpeechRecognitionListener();
         recognizer.setRecognitionListener(listener);
       }
     });
@@ -115,7 +117,10 @@ public class SpeechRecognition extends CordovaPlugin {
         mLastPartialResults = new JSONArray();
         Boolean showPartial = args.optBoolean(3, false);
         Boolean showPopup = args.optBoolean(4, true);
-        startListening(lang, matches, prompt,showPartial, showPopup);
+        // Optional silence timeouts (ms), appended after the original five arguments. Zero means the platform default.
+        Map<String, Long> silenceExtras = SilenceTimeouts.extras(
+            args.optLong(5, 0), args.optLong(6, 0), args.optLong(7, 0));
+        startListening(lang, matches, prompt, showPartial, showPopup, silenceExtras);
 
         return true;
       }
@@ -161,7 +166,8 @@ public class SpeechRecognition extends CordovaPlugin {
     return SpeechRecognizer.isRecognitionAvailable(context);
   }
 
-  private void startListening(String language, int matches, String prompt, final Boolean showPartial, Boolean showPopup) {
+  private void startListening(String language, int matches, String prompt, final Boolean showPartial, Boolean showPopup,
+                              Map<String, Long> silenceExtras) {
     Log.d(LOG_TAG, "startListening() language: " + language + ", matches: " + matches + ", prompt: " + prompt + ", showPartial: " + showPartial + ", showPopup: " + showPopup);
 
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -176,6 +182,10 @@ public class SpeechRecognition extends CordovaPlugin {
 
     if (prompt != null) {
       intent.putExtra(RecognizerIntent.EXTRA_PROMPT, prompt);
+    }
+
+    for (Map.Entry<String, Long> extra : silenceExtras.entrySet()) {
+      intent.putExtra(extra.getKey(), extra.getValue().longValue());
     }
 
     if (showPopup) {

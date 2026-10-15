@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The plugin's tests for cordova-plugin-test-framework: cordova-paramedic installs this beside the plugin and runs `defineAutoTests`
+     on a simulator, an emulator or a phone. Not published: package.json `files` leaves tests/ out. -->
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-speech-recognizer-tests" version="0.1.0">
+    <name>Speech Recognition Tests</name>
+    <license>MIT</license>
+    <js-module src="tests.js" name="tests" />
+</plugin>

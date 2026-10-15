@@ -1,9 +1,9 @@
 {
-  "name": "cordova-plugin-speechrecognition",
-  "version": "1.2.0",
+  "name": "cordova-plugin-speech-recognizer",
+  "version": "1.3.0",
   "description": "Cordova Plugin for Speech Recognition",
   "cordova": {
-    "id": "cordova-plugin-speechrecognition",
+    "id": "cordova-plugin-speech-recognizer",
     "platforms": [
       "android",
       "ios"
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pbakondy/cordova-plugin-speechrecognition.git"
+    "url": "https://github.com/MaximBelov/cordova-plugin-speech-recognizer.git"
   },
   "keywords": [
     "cordova",
@@ -30,7 +30,32 @@
   "author": "Peter Bakondy",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pbakondy/cordova-plugin-speechrecognition/issues"
+    "url": "https://github.com/MaximBelov/cordova-plugin-speech-recognizer/issues"
   },
-  "homepage": "https://github.com/pbakondy/cordova-plugin-speechrecognition#readme"
+  "homepage": "https://github.com/MaximBelov/cordova-plugin-speech-recognizer#readme",
+  "files": [
+    "plugin.xml",
+    "www",
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test test/unit/*.test.js",
+    "test:unit:coverage": "mkdir -p coverage && node --test --experimental-test-coverage --test-coverage-include=\"www/**\" --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/js.lcov test/unit/*.test.js && node test/coverage/summarize.mjs js",
+    "test:ios": "cd test/ios && xcodebuild test -scheme SpeechRecognitionTests-Package -destination \"platform=iOS Simulator,name=$(node simulator.mjs)\" -skipPackagePluginValidation",
+    "test:ios:coverage": "cd test/ios && ./coverage.sh && cd ../.. && node test/coverage/summarize.mjs ios",
+    "test:android": "cd test/android && ./gradlew test",
+    "test:android:coverage": "cd test/android && ./gradlew createDebugUnitTestCoverageReport && cd ../.. && node test/coverage/summarize.mjs android",
+    "test:paramedic:ios:simulator": "cordova-paramedic --platform ios --plugin . --target=$(node test/ios/simulator.mjs --paramedic)",
+    "test:paramedic:android": "cordova-paramedic --platform android --plugin . --device --target=$ANDROID_SERIAL",
+    "test:paramedic:android:emulator": "cordova-paramedic --platform android --plugin . --target=$ANDROID_AVD"
+  },
+  "devDependencies": {
+    "cordova": "^13.0.0",
+    "cordova-android": "^15.1.0",
+    "cordova-ios": "^8.1.1",
+    "cordova-paramedic": "npm:cordova-paramedic-hotfix@2.0.0-hotfix.2"
+  }
 }

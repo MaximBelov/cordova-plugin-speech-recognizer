@@ -1,0 +1,21 @@
+{
+  "name": "speech-recognition-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo of cordova-plugin-speech-recognizer: one button per call, the answer of each shown on screen",
+  "scripts": {
+    "plugin:pack": "node scripts/pack-plugin.mjs",
+    "ios:prepare": "npx cordova platform add ios --nosave && npm run plugin:pack",
+    "ios:build": "npx cordova build ios --debug --emulator",
+    "android:prepare": "npx cordova platform add android --nosave && npm run plugin:pack",
+    "android:build": "npx cordova build android --debug"
+  },
+  "devDependencies": {
+    "cordova": "^13.0.0",
+    "cordova-android": "^15.1.0",
+    "cordova-ios": "^8.1.1"
+  },
+  "cordova": {
+    "platforms": []
+  }
+}

@@ -4,3 +4,10 @@ npm-debug.log
 notes
 .vscode
 
+test/android/build/
+test/android/.gradle/
+test/android/plugin/build/
+test/android/local.properties
+test/ios/.build/
+test/ios/Package.resolved
+/coverage/

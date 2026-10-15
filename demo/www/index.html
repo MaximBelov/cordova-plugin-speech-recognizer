@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *">
+  <title>SpeechDemo</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 16px; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 0 0 12px; padding: 8px 12px; }
+    legend { font-weight: 600; }
+    label { display: block; margin: 6px 0 2px; font-size: 14px; }
+    input[type=text], input[type=number] { width: 100%; box-sizing: border-box; padding: 6px; font-size: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { padding: 10px 14px; font-size: 15px; border-radius: 6px; border: 1px solid #555; background: #f4f4f4; }
+    button:disabled { opacity: 0.5; }
+    #log { background: #111; color: #d7ffd7; font: 13px/1.4 ui-monospace, Menlo, monospace; padding: 10px; border-radius: 6px; min-height: 160px; white-space: pre-wrap; word-break: break-word; }
+    #result { font-size: 18px; margin: 8px 0; min-height: 24px; }
+  </style>
+</head>
+<body>
+  <h1>Speech recognition demo</h1>
+
+  <fieldset>
+    <legend>Listening options</legend>
+    <label for="language">Language</label>
+    <input id="language" type="text" value="en-GB" autocomplete="off">
+    <label><input id="showPartial" type="checkbox" checked> Partial results</label>
+    <label><input id="showPopup" type="checkbox"> Show the system dialog (Android)</label>
+    <label for="completeSilence">Complete silence, ms (Android, blank = platform default)</label>
+    <input id="completeSilence" type="number" min="0" inputmode="numeric" placeholder="e.g. 2500">
+    <label for="possiblySilence">Possibly complete silence, ms (Android)</label>
+    <input id="possiblySilence" type="number" min="0" inputmode="numeric" placeholder="e.g. 1500">
+    <label for="minimumLength">Minimum length, ms (Android)</label>
+    <input id="minimumLength" type="number" min="0" inputmode="numeric" placeholder="e.g. 800">
+  </fieldset>
+
+  <fieldset>
+    <legend>Calls</legend>
+    <div class="row">
+      <button id="btnAvailable">isRecognitionAvailable</button>
+      <button id="btnHasPermission">hasPermission</button>
+      <button id="btnRequestPermission">requestPermission</button>
+      <button id="btnLanguages">getSupportedLanguages</button>
+      <button id="btnStart">startListening</button>
+      <button id="btnStop">stopListening</button>
+    </div>
+  </fieldset>
+
+  <div id="result" role="status" aria-live="polite"></div>
+  <div id="log" aria-label="Log of calls and answers"></div>
+
+  <script src="cordova.js"></script>
+  <script>
+    var plugin = null;
+    var listening = false;
+
+    function log(text) {
+      var line = new Date().toLocaleTimeString() + '  ' + text + '\n';
+      var box = document.getElementById('log');
+      box.textContent = line + box.textContent;
+    }
+
+    function show(text) {
+      document.getElementById('result').textContent = text;
+    }
+
+    function setListening(on) {
+      listening = on;
+      document.getElementById('btnStart').disabled = on;
+      document.getElementById('btnStop').disabled = !on;
+    }
+
+    // Blank fields are left out, so the plugin keeps the platform default for them.
+    function silenceOptions() {
+      var options = {};
+      var fields = { completeSilence: 'completeSilenceMs', possiblySilence: 'possiblyCompleteSilenceMs', minimumLength: 'minimumLengthMs' };
+      Object.keys(fields).forEach(function (id) {
+        var value = document.getElementById(id).value;
+        if (value !== '') {
+          options[fields[id]] = Number(value);
+        }
+      });
+      return options;
+    }
+
+    function listeningOptions() {
+      var options = {
+        language: document.getElementById('language').value.trim() || 'en-US',
+        matches: 3,
+        prompt: 'Say a search term',
+        showPartial: document.getElementById('showPartial').checked,
+        showPopup: document.getElementById('showPopup').checked
+      };
+      return Object.assign(options, silenceOptions());
+    }
+
+    function call(name, fn, onOk) {
+      log(name + ' ...');
+      fn(function (answer) {
+        log(name + ' -> ' + JSON.stringify(answer));
+        if (onOk) { onOk(answer); }
+      }, function (error) {
+        log(name + ' failed: ' + JSON.stringify(error));
+        show(name + ' failed: ' + error);
+      });
+    }
+
+    function onDeviceReady() {
+      plugin = window.plugins.speechRecognition;
+      setListening(false);
+
+      document.getElementById('btnAvailable').onclick = function () {
+        call('isRecognitionAvailable', function (ok, err) { plugin.isRecognitionAvailable(ok, err); });
+      };
+      document.getElementById('btnHasPermission').onclick = function () {
+        call('hasPermission', function (ok, err) { plugin.hasPermission(ok, err); });
+      };
+      document.getElementById('btnRequestPermission').onclick = function () {
+        call('requestPermission', function (ok, err) { plugin.requestPermission(ok, err); });
+      };
+      document.getElementById('btnLanguages').onclick = function () {
+        call('getSupportedLanguages', function (ok, err) { plugin.getSupportedLanguages(ok, err); },
+          function (languages) { show(languages.length + ' languages'); });
+      };
+      document.getElementById('btnStart').onclick = function () {
+        var options = listeningOptions();
+        log('startListening ' + JSON.stringify(options));
+        setListening(true);
+        show('Listening...');
+        plugin.startListening(function (matches) {
+          // Partial results arrive several times; the last one is the final text.
+          if (matches && matches.length) {
+            show(matches[0]);
+          }
+          if (matches && matches.length) {
+            log('result: ' + JSON.stringify(matches));
+          }
+        }, function (error) {
+          setListening(false);
+          log('startListening failed: ' + JSON.stringify(error));
+          show('Error: ' + error);
+        }, options);
+      };
+      document.getElementById('btnStop').onclick = function () {
+        plugin.stopListening(function () {
+          setListening(false);
+          log('stopListening -> ok');
+        }, function (error) {
+          log('stopListening failed: ' + JSON.stringify(error));
+        });
+      };
+    }
+
+    document.addEventListener('deviceready', onDeviceReady, false);
+  </script>
+</body>
+</html>

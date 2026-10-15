@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace = 'com.pbakondy.test'
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 24
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets {
+        // The sources the plugin ships, not a copy of them.
+        main.java.srcDirs = ['../../../src/android/com/pbakondy']
+    }
+    buildTypes {
+        debug {
+            // the coverage of the unit tests: createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
+    }
+    testOptions {
+        targetSdk = 35
+        unitTests {
+            includeAndroidResources = true
+            all {
+                // Robolectric loads the classes under test through its own class loader; without this they report no lines.
+                jacoco {
+                    includeNoLocationClasses = true
+                    excludes = ['jdk.internal.*']
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    // the same version plugin.xml declares for an app, and the artifact an app gets for cordova-android 15
+    implementation 'org.apache.cordova:framework:15.1.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.17'
+    testImplementation 'org.mockito:mockito-core:5.24.0'
+}

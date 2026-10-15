@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
   xmlns:android="http://schemas.android.com/apk/res/android"
-  id="cordova-plugin-speechrecognition"
-  version="1.2.0">
+  id="cordova-plugin-speech-recognizer"
+  version="1.3.0">
 
   <name>Speech Recognition</name>
   <description>Cordova Plugin for Speech Recognition</description>
@@ -33,6 +33,7 @@
     </config-file>
 
     <source-file src="src/android/com/pbakondy/SpeechRecognition.java" target-dir="src/com/pbakondy" />
+    <source-file src="src/android/com/pbakondy/SilenceTimeouts.java" target-dir="src/com/pbakondy" />
     <source-file src="src/android/com/pbakondy/LanguageDetailsChecker.java" target-dir="src/com/pbakondy" />
   </platform>
 
