@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: a published version gets its git tag (v<version>) on the commit it was published from, and a GitHub release with its section of this file; `scripts/release.mjs` finds both, and back-fills an older version by hand
+
 ## v1.3.1
 
 - Docs: how an app sets its own iOS permission prompt texts with an `edit-config` in its `config.xml`, instead of patching the plugin
